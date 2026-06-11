@@ -4,8 +4,6 @@ import requests
 from datetime import datetime
 import pandas as pd
 from pathlib import Path
-# import yfinance as yf
-# import concurrent.futures
 import os
 from dotenv import load_dotenv
 
@@ -181,7 +179,7 @@ def get_stocks(data: dict) -> list:
     return stocks
 
 
-def get_stocks_info(data: dict) -> list[dict]:
+def get_stocks_info(data: list) -> list[dict]:
     """Функция для получения информации о ценах акций"""
     logger_ut.info("Функция get_stocks_info запущена")
     try:
