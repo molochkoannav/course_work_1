@@ -69,18 +69,22 @@ def get_date_period(date_time: str, date_format: str = "%Y-%m-%d %H:%M:%S")-> li
 def get_read_excel_file(file_path: str, date_period: list[str])-> pd.DataFrame:
     """Функция возвращает данные из файла Excel на период указанных дат"""
     logger_ut.info("Функция get_read_excel_file запущена")
-    df = pd.read_excel(file_path, sheet_name="Отчет по операциям")
-    df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
-    start_date = datetime.strptime(date_period[0],"%d.%m.%Y %H:%M:%S")
-    end_date = datetime.strptime(date_period[1],"%d.%m.%Y %H:%M:%S")
-    df_period = df[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
-    logger_ut.info("Функция get_read_excel_file отработала")
+    try:
+        df = pd.read_excel(file_path, sheet_name="Отчет по операциям")
+        df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
+        start_date = datetime.strptime(date_period[0],"%d.%m.%Y %H:%M:%S")
+        end_date = datetime.strptime(date_period[1],"%d.%m.%Y %H:%M:%S")
+        df_period = df[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
+        logger_ut.info("Функция get_read_excel_file отработала")
 
-    return df_period
+        return df_period
+    except Exception as e:
+        logger_ut.error(f"Ошибка при чтении файла: {e}")
+        return  pd.DataFrame()
 
 
 def get_filtred_info(data: pd.DataFrame) -> list[dict]:
-    """Функция возвращает последние 4 цифры карты, общую сумму расходов и кешбек"""
+    """Функция возвращает последние 4 цифры карты, общую сумму расходов и кэшбэк"""
     logger_ut.info("Функция get_filtred_info запущена")
     cards = []
     data = data.copy()
@@ -128,13 +132,13 @@ def get_read_file(file_path: str)-> dict:
                 logger_ut.info("Функция get_read_file отработала, но в переданных данных не словарь")
                 return {}
     except FileNotFoundError:
-        logger_ut.warning("Функция get_read_file отработала, но файл не найден")
+        logger_ut.error("Функция get_read_file отработала, но файл не найден")
         return {}
     except json.decoder.JSONDecodeError:
-        logger_ut.warning("Функция get_read_file отработала, но файл не является валидным json")
+        logger_ut.error("Функция get_read_file отработала, но файл не является валидным json")
         return {}
     except ValueError:
-        logger_ut.warning("Функция get_read_file отработала, но файл не является валидным json")
+        logger_ut.error("Функция get_read_file отработала, но файл не является валидным json")
         return {}
 
 def get_currency_rates(data: dict)-> list[dict]:
@@ -144,7 +148,7 @@ def get_currency_rates(data: dict)-> list[dict]:
         logger_ut.info("Функция get_currency_rates пробует отправить запрос")
         currencies = data.get("user_currencies", "")
         if not currencies or len(currencies) < 2:
-            logger_ut.warning("Недостаточно валют для обработки")
+            logger_ut.error("Недостаточно валют для обработки")
             return []
 
         user_currencies_usd = currencies[0]
@@ -161,10 +165,10 @@ def get_currency_rates(data: dict)-> list[dict]:
 
         return data_rates
     except requests.RequestException as e:
-        logger_ut.warning(f"Функция get_currency_rates отработала с ошибкой {e} ")
+        logger_ut.error(f"Функция get_currency_rates отработала с ошибкой {e} ")
         return []
     except (ValueError, TypeError, AttributeError) as e:
-        logger_ut.warning(f"Функция get_currency_rates отработала с ошибкой {e}")
+        logger_ut.error(f"Функция get_currency_rates отработала с ошибкой {e}")
         return []
 
 
@@ -194,7 +198,7 @@ def get_stocks_info(data: list) -> list[dict]:
         return all_results
 
     except requests.RequestException as e:
-        logger_ut.warning(f"Функция get_stocks_info отработала с ошибкой {e}")
+        logger_ut.error(f"Функция get_stocks_info отработала с ошибкой {e}")
         return []
     except KeyError as e:
         logger_ut.error(f"Отсутствует необходимый ключ в данных: {e}")
