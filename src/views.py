@@ -4,8 +4,7 @@ from typing import Any
 from typing import Dict
 
 
-from src.utils import get_date_period, get_filtred_info, get_top_five, get_read_file, get_currency_rates, get_stocks, \
-    download_ticker, get_stocks_info
+from src.utils import get_date_period, get_filtred_info, get_top_five, get_read_file, get_currency_rates, get_stocks, get_stocks_info
 from src.utils import get_read_excel_file
 from src.utils import get_user_time
 

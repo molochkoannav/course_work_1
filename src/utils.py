@@ -4,10 +4,14 @@ import requests
 from datetime import datetime
 import pandas as pd
 from pathlib import Path
-import yfinance as yf
-import concurrent.futures
+# import yfinance as yf
+# import concurrent.futures
+import os
+from dotenv import load_dotenv
 
-from pandas import DataFrame as Dataframe
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+
 
 
 current_file = Path(__file__)
@@ -153,8 +157,8 @@ def get_currency_rates(data: dict)-> list[dict]:
         data_json = response.json()
         data_rates = []
         if response.status_code == 200:
-            data_rates.append({"currency": user_currencies_usd, "rate": data_json["Valute"]["USD"]["Value"]})
-            data_rates.append({"currency": user_currencies_eur, "rate": data_json["Valute"]["EUR"]["Value"]})
+            data_rates.append({"currency": user_currencies_usd, "rate": round(data_json["Valute"]["USD"]["Value"], 2)})
+            data_rates.append({"currency": user_currencies_eur, "rate": round(data_json["Valute"]["EUR"]["Value"], 2)})
             logger_ut.info(f"Функция get_currency_rates отработала с кодом {response.status_code}")
 
         return data_rates
@@ -166,84 +170,34 @@ def get_currency_rates(data: dict)-> list[dict]:
         return []
 
 
-def get_stocks(data: dict) -> dict:
+def get_stocks(data: dict) -> list:
     """Функция для получения списка тикеров акций из входных данных"""
     logger_ut.info("Функция get_stocks запущена")
 
-    stocks = {"user_stocks": data.get("user_stocks", [])}
+    stocks = data.get("user_stocks", [])
     if isinstance(stocks, str):
         stocks = [s.strip() for s in stocks.split(",") if s.strip()]
     logger_ut.info(f"Получены тикеры: {stocks}")
     return stocks
 
 
-def download_ticker(ticker):
-    """Загрузка исторических данных для одного тикера"""
-    try:
-        return yf.Ticker(ticker).history(period="1y")
-    except Exception as e:
-        logger_ut.warning(f"Ошибка загрузки {ticker}: {e}")
-        return None
-
-
 def get_stocks_info(data: dict) -> list[dict]:
-    """
-    Функция для получения информации о акциях (текущие цены)
-
-    Args:
-        data: словарь с ключом "user_stocks" (список тикеров)
-
-    Returns:
-        list[dict]: список словарей с информацией об акциях
-    """
+    """Функция для получения информации о ценах акций"""
     logger_ut.info("Функция get_stocks_info запущена")
-
     try:
-        tickers = data.get("user_stocks", [])
-        if not tickers:
-            logger_ut.warning("Список тикеров пуст")
-            return []
+        all_results = []
+        for d in data:
+            url = f"https://api.twelvedata.com/price?symbol={d}&apikey={API_KEY}"
+            response = requests.get(url)
+            result = response.json()
+            all_results.append({"stock": d, "price": round(float(result["price"]), 2)})
+            logger_ut.info("Функция get_stocks_info отработала")
 
-        logger_ut.info(f"Загрузка данных для {len(tickers)} тикеров")
+        return all_results
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            results = list(executor.map(download_ticker, tickers))
-            historical_data = {
-                ticker: result for ticker, result in zip(tickers, results)
-                if result is not None and hasattr(result, 'empty') and not result.empty
-            }
-
-        data_stocks = []
-        for ticker in tickers:
-            logger_ut.info(f"Обработка {ticker}")
-
-            if ticker in historical_data:
-                df = historical_data[ticker]
-                # Добавляем проверку на наличие колонки 'Close'
-                if 'Close' in df.columns and not df['Close'].empty:
-                    last_price = df['Close'].iloc[-1]
-                    data_stocks.append({
-                        "stock": ticker,
-                        "price": round(last_price, 2)
-                    })
-                else:
-                    logger_ut.warning(f"Нет данных 'Close' для {ticker}")
-                    data_stocks.append({
-                        "stock": ticker,
-                        "price": None,
-                        "error": "Нет данных о цене закрытия"
-                    })
-            else:
-                logger_ut.warning(f"Не удалось загрузить данные для {ticker}")
-                data_stocks.append({
-                    "stock": ticker,
-                    "price": None,
-                    "error": "Данные не загружены"
-                })
-
-        logger_ut.info(f"Успешно обработано {len(data_stocks)} акций")
-        return data_stocks
-
+    except requests.RequestException as e:
+        logger_ut.warning(f"Функция get_stocks_info отработала с ошибкой {e}")
+        return []
     except KeyError as e:
         logger_ut.error(f"Отсутствует необходимый ключ в данных: {e}")
         return []
