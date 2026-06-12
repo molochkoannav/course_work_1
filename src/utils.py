@@ -211,7 +211,7 @@ def get_stocks_info(data: list) -> list[dict]:
 
 def normalize(user_input: str) -> str:
     """Функция переводит введенный номер телефона в формат для поиска (+7 XXX XX-XX-XX)"""
-
+    logger_ut.info("Функция normalize запущена")
     digits = re.sub(r'\D', '', user_input)
 
     if digits.startswith('8') and len(digits) == 11:

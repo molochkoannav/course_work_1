@@ -1,5 +1,4 @@
 import re
-from string import digits
 from typing import List, Dict
 
 import pandas as pd
@@ -94,3 +93,35 @@ def search_by_phone_number(user_input: str) -> List[Dict]:
     except Exception as e:
         logger_sv.error(f"Ошибка при поиске: {str(e)}")
         return []
+
+
+def filters_transactions_by_persons(user_input: str) -> List[Dict]:
+    try:
+        logger_sv.info("Запуск поиска")
+        df = pd.read_excel("data/operations.xlsx")
+
+
+        pattern = re.escape(user_input.title())
+        filtered = df[
+            (df["Категория"] == "Переводы") &
+            (df["Описание"].astype(str).str.contains(pattern, case=False, na=False))
+            ]
+
+        if filtered.empty:
+            logger_sv.info("Транзакции не найдены")
+            return []
+
+        logger_sv.info(f"Найдено {len(filtered)} транзакций")
+        json_records = filtered.to_dict(orient="records")
+        result = tabulate(json_records, headers="keys", tablefmt="pretty")
+        logger_sv.info(f"Результат выведен в консоль в виде таблицы для улучшения читаемости")
+        return result
+
+    except FileNotFoundError:
+        logger_sv.error("Файл data/operations.xlsx не найден")
+        return []
+    except Exception as e:
+        logger_sv.error(f"Ошибка: {e}")
+        return []
+
+

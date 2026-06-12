@@ -1,11 +1,11 @@
+import re
 import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import pandas as pd
 import requests
-import json
-from datetime import datetime
 import sys
 from pathlib import Path
+import pytest
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -18,7 +18,7 @@ from src.utils import (
     get_read_file,
     get_currency_rates,
     get_stocks,
-    get_stocks_info
+    get_stocks_info, normalize
 )
 
 
@@ -313,3 +313,36 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(result, [])
         mock_get.assert_not_called()
+
+
+class TestNormalize:
+
+    @pytest.mark.parametrize("input_str,expected", [
+        ("921112233", "+7 921 11-22-33"),
+        ("79955555555", "+7 995 555-55-5"),
+        ("89813334455", "+7 981 333-44-55"),
+    ])
+    def test_normalize_phone_numbers(self, input_str, expected):
+        """Тест проверяет преобразование номеров телефонов"""
+        assert normalize(input_str) == expected
+
+    @pytest.mark.parametrize("input_str,expected_length", [
+        ("921112233", 15),
+        ("79955555555", 15),
+        ("89813334455", 16),
+    ])
+    def test_normalize_output_length(self, input_str, expected_length):
+        """Тест проверяет длину выходной строки"""
+        result = normalize(input_str)
+        assert len(result) == expected_length
+
+    @pytest.mark.parametrize("input_str", [
+        "921112233",
+        "79955555555",
+        "89813334455",
+    ])
+    def test_normalize_returns_string(self, input_str):
+        """Тест проверяет что функция возвращает строку"""
+        result = normalize(input_str)
+        assert isinstance(result, str)
+
