@@ -6,6 +6,7 @@ import pandas as pd
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
@@ -206,3 +207,29 @@ def get_stocks_info(data: list) -> list[dict]:
     except Exception as e:
         logger_ut.error(f"Функция get_stocks_info отработала с ошибкой {e}")
         return []
+
+
+def normalize(user_input: str) -> str:
+    """Функция переводит введенный номер телефона в формат для поиска (+7 XXX XX-XX-XX)"""
+
+    digits = re.sub(r'\D', '', user_input)
+
+    if digits.startswith('8') and len(digits) == 11:
+        return f"+7 {digits[1:4]} {digits[4:7]}-{digits[7:9]}-{digits[9:11]}"
+
+    elif digits.startswith('7') and len(digits) == 11:
+        return f"+7 {digits[1:4]} {digits[4:7]}-{digits[7:9]}-{digits[9:10]}"
+
+    elif len(digits) == 10 and digits.startswith('9'):
+        return f"+7 {digits[0:3]} {digits[3:5]}-{digits[5:7]}-{digits[7:9]}"
+
+    elif len(digits) == 10:
+        return f"+7 {digits[0:3]} {digits[3:5]}-{digits[5:7]}-{digits[7:9]}"
+
+    elif len(digits) < 10 and digits.startswith('9'):
+        return f"+7 {digits[0:3]} {digits[3:5]}-{digits[5:7]}-{digits[7:9]}"
+
+    else:
+        last_10 = digits[-10:]
+        return f"+7 {last_10[0:3]} {last_10[3:5]}-{last_10[5:7]}-{last_10[7:9]}"
+
