@@ -18,7 +18,8 @@ from src.utils import (
     get_read_file,
     get_currency_rates,
     get_stocks,
-    get_stocks_info, normalize
+    get_stocks_info, normalize,unique_categories
+
 )
 
 
@@ -32,7 +33,7 @@ class TestUtils(unittest.TestCase):
         mock_now.hour = 8
         mock_datetime.now.return_value = mock_now
         result = get_user_time()
-        self.assertEqual(result, "Доброе утро")
+        self.assertEqual(result, "Доброе утро!")
 
     @patch('src.utils.datetime')
     def test_get_user_time_afternoon(self, mock_datetime):
@@ -41,7 +42,7 @@ class TestUtils(unittest.TestCase):
         mock_now.hour = 14
         mock_datetime.now.return_value = mock_now
         result = get_user_time()
-        self.assertEqual(result, "Добрый день")
+        self.assertEqual(result, "Добрый день!")
 
     @patch('src.utils.datetime')
     def test_get_user_time_evening(self, mock_datetime):
@@ -50,7 +51,7 @@ class TestUtils(unittest.TestCase):
         mock_now.hour = 20
         mock_datetime.now.return_value = mock_now
         result = get_user_time()
-        self.assertEqual(result, "Добрый вечер")
+        self.assertEqual(result, "Добрый вечер!")
 
     @patch('src.utils.datetime')
     def test_get_user_time_night(self, mock_datetime):
@@ -59,7 +60,7 @@ class TestUtils(unittest.TestCase):
         mock_now.hour = 1
         mock_datetime.now.return_value = mock_now
         result = get_user_time()
-        self.assertEqual(result, "Доброй ночи")
+        self.assertEqual(result, "Доброй ночи!")
 
     def test_get_date_period(self):
         """Тест получения периода от начала месяца до указанной даты"""
@@ -346,3 +347,14 @@ class TestNormalize:
         result = normalize(input_str)
         assert isinstance(result, str)
 
+
+def test_mock_short1():
+    """Тест на проверку вывода уникальных категорий"""
+    mock_df = MagicMock()
+    mock_df.__getitem__.return_value.drop_duplicates.return_value.reset_index.return_value = pd.DataFrame(
+        {'Категория': ['A', 'B', None]})
+
+    result = unique_categories(mock_df)
+
+    assert len(result) == 3
+    assert list(result['Категория']) == ['A', 'B', 'Без категории']

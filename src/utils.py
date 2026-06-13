@@ -43,16 +43,16 @@ def get_user_time():
     user_date_time = datetime.now().hour
     if user_date_time < 12 and user_date_time >= 6:
         logger_ut.info("Функция get_user_time отработала")
-        return "Доброе утро"
+        return "Доброе утро!"
     elif user_date_time < 18 and user_date_time >= 12:
         logger_ut.info("Функция get_user_time отработала")
-        return "Добрый день"
+        return "Добрый день!"
     elif user_date_time < 23 and user_date_time >= 18:
         logger_ut.info("Функция get_user_time отработала")
-        return "Добрый вечер"
+        return "Добрый вечер!"
     else:
         logger_ut.info("Функция get_user_time отработала")
-        return "Доброй ночи"
+        return "Доброй ночи!"
 
 def get_date_period(date_time: str, date_format: str = "%Y-%m-%d %H:%M:%S")-> list[str]:
     """Функция возвращает диапазон от указанной даты и времени до начала месяца"""
@@ -233,3 +233,9 @@ def normalize(user_input: str) -> str:
         last_10 = digits[-10:]
         return f"+7 {last_10[0:3]} {last_10[3:5]}-{last_10[5:7]}-{last_10[7:9]}"
 
+
+def unique_categories(df):
+    """Возвращает DataFrame с уникальными категориями"""
+    unique_rows = df[['Категория']].drop_duplicates().reset_index(drop=True)
+    unique_rows['Категория'] = unique_rows['Категория'].fillna('Без категории')
+    return unique_rows

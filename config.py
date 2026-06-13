@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+
 
 # Базовые пути
 BASE_DIR = Path(__file__).parent
