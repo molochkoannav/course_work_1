@@ -1,9 +1,10 @@
-import re
-from datetime import datetime
-from typing import List, Dict, Any
-import pandas as pd
-from pathlib import Path
 import logging
+import re
+from pathlib import Path
+from typing import Dict
+from typing import List
+
+import pandas as pd
 from tabulate import tabulate
 
 from src.utils import normalize
@@ -48,10 +49,10 @@ def search_by_phrases(user_input: str) -> list[dict]:
             logger_sv.info(f"Успешно отфильтровано {len(filtered_transaction)} строк")
             json_records = filtered_transaction.to_dict(orient="records")
             result = tabulate(json_records, headers="keys", tablefmt="pretty")
-            logger_sv.info(f"Результат выведен в консоль в виде таблицы для улучшения читаемости")
+            logger_sv.info("Результат выведен в консоль в виде таблицы для улучшения читаемости")
             return result
         else:
-            logger_sv.info(f"Нет строк содержащих требуемое описание")
+            logger_sv.info("Нет строк содержащих требуемое описание")
             return []
 
     except FileNotFoundError as e:
@@ -72,16 +73,14 @@ def search_by_phone_number(user_input: str) -> List[Dict]:
         logger_sv.info(f"Успешно прочитано {len(pd_excel)} строк")
 
         pattern = re.escape(search_normalized_number)
-        mask = pd_excel["Описание"].astype(str).apply(
-            lambda x: bool(re.search(pattern, x))
-        )
+        mask = pd_excel["Описание"].astype(str).apply(lambda x: bool(re.search(pattern, x)))
         filtered_transaction = pd_excel[mask]
 
         if len(filtered_transaction) > 0:
             logger_sv.info(f"Успешно отфильтровано {len(filtered_transaction)} строк")
             json_records = filtered_transaction.to_dict(orient="records")
             result = tabulate(json_records, headers="keys", tablefmt="pretty")
-            logger_sv.info(f"Результат выведен в консоль в виде таблицы для улучшения читаемости")
+            logger_sv.info("Результат выведен в консоль в виде таблицы для улучшения читаемости")
             return result
         else:
             logger_sv.info("Нет строк содержащих требуемое описание")
@@ -100,12 +99,10 @@ def filters_transactions_by_persons(user_input: str) -> List[Dict]:
         logger_sv.info("Запуск поиска")
         df = pd.read_excel("data/operations.xlsx")
 
-
         pattern = re.escape(user_input.title())
         filtered = df[
-            (df["Категория"] == "Переводы") &
-            (df["Описание"].astype(str).str.contains(pattern, case=False, na=False))
-            ]
+            (df["Категория"] == "Переводы") & (df["Описание"].astype(str).str.contains(pattern, case=False, na=False))
+        ]
 
         if filtered.empty:
             logger_sv.info("Транзакции не найдены")
@@ -114,7 +111,7 @@ def filters_transactions_by_persons(user_input: str) -> List[Dict]:
         logger_sv.info(f"Найдено {len(filtered)} транзакций")
         json_records = filtered.to_dict(orient="records")
         result = tabulate(json_records, headers="keys", tablefmt="pretty")
-        logger_sv.info(f"Результат выведен в консоль в виде таблицы для улучшения читаемости")
+        logger_sv.info("Результат выведен в консоль в виде таблицы для улучшения читаемости")
         return result
 
     except FileNotFoundError:
@@ -123,5 +120,3 @@ def filters_transactions_by_persons(user_input: str) -> List[Dict]:
     except Exception as e:
         logger_sv.error(f"Ошибка: {e}")
         return []
-
-

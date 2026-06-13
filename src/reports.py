@@ -1,11 +1,14 @@
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from functools import wraps
-from typing import Optional, Callable, Any
-import pandas as pd
-
 from pathlib import Path
+from typing import Any
+from typing import Callable
+from typing import Optional
+
+import pandas as pd
 
 current_file = Path(__file__)
 project_root = current_file.parent.parent
@@ -32,7 +35,7 @@ logger_rs.propagate = False
 
 
 def report_decorator(filename: Optional[str] = None):
-    """ Декоратор для функций-отчетов, который сохраняет результат в JSON файл """
+    """Декоратор для функций-отчетов, который сохраняет результат в JSON файл"""
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -44,16 +47,16 @@ def report_decorator(filename: Optional[str] = None):
             else:
                 output_filename = filename
             try:
-                with open(output_filename, 'w', encoding='utf-8') as f:
+                with open(output_filename, "w", encoding="utf-8") as f:
                     if isinstance(result, pd.DataFrame):
                         pretty_result = {
-                            "metadata": getattr(result, 'attrs', {}),
-                            "data": result.to_dict(orient='records'),
+                            "metadata": getattr(result, "attrs", {}),
+                            "data": result.to_dict(orient="records"),
                             "statistics": {
                                 "total_rows": len(result),
                                 "total_columns": len(result.columns),
-                                "columns_list": list(result.columns)
-                            }
+                                "columns_list": list(result.columns),
+                            },
                         }
                         json.dump(pretty_result, f, ensure_ascii=False, indent=4, default=str)
                     else:
@@ -69,13 +72,20 @@ def report_decorator(filename: Optional[str] = None):
 
     return decorator
 
+
 @report_decorator()
-def spending_by_category(df: pd.DataFrame,
-                         category: str,
-                         date: Optional[str] = None) -> pd.DataFrame:
-    """ Функция для создания отчета о тратах по категории """
+def spending_by_category(df: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
+    """Функция для создания отчета о тратах по категории"""
     logger_rs.info(f" найдено {len(df)} строк")
-    required_columns = ['Дата платежа', 'Категория', 'Сумма операции', 'Номер карты', 'Валюта операции', 'MCC', 'Описание']
+    required_columns = [
+        "Дата платежа",
+        "Категория",
+        "Сумма операции",
+        "Номер карты",
+        "Валюта операции",
+        "MCC",
+        "Описание",
+    ]
 
     for col in required_columns:
         if col not in df.columns:
@@ -84,9 +94,9 @@ def spending_by_category(df: pd.DataFrame,
 
     df_copy = df.copy()
 
-    if not pd.api.types.is_datetime64_any_dtype(df_copy['Дата платежа']):
-        logger_rs.info(f"'Дата платежа' не является типом даты")
-        df_copy['Дата платежа'] = pd.to_datetime(df_copy['Дата платежа'], dayfirst=True)
+    if not pd.api.types.is_datetime64_any_dtype(df_copy["Дата платежа"]):
+        logger_rs.info("'Дата платежа' не является типом даты")
+        df_copy["Дата платежа"] = pd.to_datetime(df_copy["Дата платежа"], dayfirst=True)
 
     if date is None:
         target_date = datetime.now()
@@ -101,34 +111,39 @@ def spending_by_category(df: pd.DataFrame,
     logger_rs.info(f"Анализ трат по категории '{category}' за период с {start_date.date()} по {target_date.date()}")
 
     mask = (
-            (df_copy['Дата платежа'] >= start_date) &
-            (df_copy['Дата платежа'] <= target_date) &
-            (df_copy['Категория'] == category)
+        (df_copy["Дата платежа"] >= start_date)
+        & (df_copy["Дата платежа"] <= target_date)
+        & (df_copy["Категория"] == category)
     )
 
     filtered_df = df_copy[mask].copy()
 
     if len(filtered_df) == 0:
         logger_rs.warning(f"Не найдено транзакций по категории '{category}' за указанный период")
-        return pd.DataFrame(columns=['Месяц', 'Сумма трат', 'Количество операций'])
+        return pd.DataFrame(columns=["Месяц", "Сумма трат", "Количество операций"])
 
-    if (filtered_df['Сумма операции'] < 0).any():
-        filtered_df['Сумма трат'] = filtered_df['Сумма операции'].abs()
+    if (filtered_df["Сумма операции"] < 0).any():
+        filtered_df["Сумма трат"] = filtered_df["Сумма операции"].abs()
     else:
-        filtered_df['Сумма трат'] = filtered_df['Сумма операции']
+        filtered_df["Сумма трат"] = filtered_df["Сумма операции"]
 
-    filtered_df['Месяц'] = filtered_df['Дата платежа'].dt.to_period('M')
+    filtered_df["Месяц"] = filtered_df["Дата платежа"].dt.to_period("M")
 
-    monthly_report = filtered_df.groupby('Месяц').agg(
-        Сумма_трат=('Сумма трат', 'sum'),
-        Количество_операций=('Сумма трат', 'count'),
-        Средний_чек=('Сумма трат', 'mean')
-    ).round(2).reset_index()
+    monthly_report = (
+        filtered_df.groupby("Месяц")
+        .agg(
+            Сумма_трат=("Сумма трат", "sum"),
+            Количество_операций=("Сумма трат", "count"),
+            Средний_чек=("Сумма трат", "mean"),
+        )
+        .round(2)
+        .reset_index()
+    )
 
-    monthly_report['Месяц'] = monthly_report['Месяц'].astype(str)
+    monthly_report["Месяц"] = monthly_report["Месяц"].astype(str)
 
-    total_amount = monthly_report['Сумма_трат'].sum()
-    total_operations = monthly_report['Количество_операций'].sum()
+    total_amount = monthly_report["Сумма_трат"].sum()
+    total_operations = monthly_report["Количество_операций"].sum()
 
     logger_rs.info(
         f"Найдено транзакций: {total_operations}, "
@@ -136,9 +151,9 @@ def spending_by_category(df: pd.DataFrame,
         f"за {len(monthly_report)} месяцев"
     )
 
-    monthly_report.attrs['Начало периода'] = start_date
-    monthly_report.attrs['Конец периода'] = target_date
-    monthly_report.attrs['Категория'] = category
-    monthly_report.attrs['Общая сумма платежа'] = total_amount
+    monthly_report.attrs["Начало периода"] = start_date
+    monthly_report.attrs["Конец периода"] = target_date
+    monthly_report.attrs["Категория"] = category
+    monthly_report.attrs["Общая сумма платежа"] = total_amount
 
     return monthly_report

@@ -1,16 +1,16 @@
 import json
 import logging
-import requests
-from datetime import datetime
-import pandas as pd
-from pathlib import Path
 import os
-from dotenv import load_dotenv
 import re
+from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
+import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
-
 
 
 current_file = Path(__file__)
@@ -36,9 +36,10 @@ file_handler_ut.setFormatter(formatter)
 logger_ut.addHandler(file_handler_ut)
 logger_ut.propagate = False
 
+
 def get_user_time():
-    """ Функция возвращает «Доброе утро» / «Добрый день» /
-    «Добрый вечер» / «Доброй ночи» в зависимости от текущего времени """
+    """Функция возвращает «Доброе утро» / «Добрый день» /
+    «Добрый вечер» / «Доброй ночи» в зависимости от текущего времени"""
     logger_ut.info("Запуск функции get_user_time")
     user_date_time = datetime.now().hour
     if user_date_time < 12 and user_date_time >= 6:
@@ -54,34 +55,31 @@ def get_user_time():
         logger_ut.info("Функция get_user_time отработала")
         return "Доброй ночи!"
 
-def get_date_period(date_time: str, date_format: str = "%Y-%m-%d %H:%M:%S")-> list[str]:
+
+def get_date_period(date_time: str, date_format: str = "%Y-%m-%d %H:%M:%S") -> list[str]:
     """Функция возвращает диапазон от указанной даты и времени до начала месяца"""
     logger_ut.info("Функция get_date_period запущена")
     user_date_time = datetime.strptime(date_time, date_format)
     month_beginning = user_date_time.replace(day=1)
     logger_ut.info("Функция get_date_period отработала")
-    return [
-        month_beginning.strftime("%d.%m.%Y %H:%M:%S"),
-        user_date_time.strftime("%d.%m.%Y %H:%M:%S")
-    ]
+    return [month_beginning.strftime("%d.%m.%Y %H:%M:%S"), user_date_time.strftime("%d.%m.%Y %H:%M:%S")]
 
 
-
-def get_read_excel_file(file_path: str, date_period: list[str])-> pd.DataFrame:
+def get_read_excel_file(file_path: str, date_period: list[str]) -> pd.DataFrame:
     """Функция возвращает данные из файла Excel на период указанных дат"""
     logger_ut.info("Функция get_read_excel_file запущена")
     try:
         df = pd.read_excel(file_path, sheet_name="Отчет по операциям")
         df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
-        start_date = datetime.strptime(date_period[0],"%d.%m.%Y %H:%M:%S")
-        end_date = datetime.strptime(date_period[1],"%d.%m.%Y %H:%M:%S")
+        start_date = datetime.strptime(date_period[0], "%d.%m.%Y %H:%M:%S")
+        end_date = datetime.strptime(date_period[1], "%d.%m.%Y %H:%M:%S")
         df_period = df[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
         logger_ut.info("Функция get_read_excel_file отработала")
 
         return df_period
     except Exception as e:
         logger_ut.error(f"Ошибка при чтении файла: {e}")
-        return  pd.DataFrame()
+        return pd.DataFrame()
 
 
 def get_filtred_info(data: pd.DataFrame) -> list[dict]:
@@ -97,29 +95,31 @@ def get_filtred_info(data: pd.DataFrame) -> list[dict]:
         total_spent = round(abs(card_data["Сумма операции"].fillna(0).sum()), 2)
         cashback = round(total_spent * 0.01, 2)
 
-        cards.append({
-            "last_digits": card[-4:],
-            "total_spent": float(total_spent),
-            "cashback": float(cashback)
-        })
+        cards.append({"last_digits": card[-4:], "total_spent": float(total_spent), "cashback": float(cashback)})
     logger_ut.info("Функция get_filtred_info отработала")
     return cards
+
 
 def get_top_five(data: pd.DataFrame) -> list[dict]:
     """Функция возвращает 5 самых дорогих операций"""
     logger_ut.info("Функция get_top_five запущена")
-    top_transactions =[]
+    top_transactions = []
     data = data.copy()
     data_sort = data[(data["Сумма операции"] < 0)].sort_values(by="Сумма операции", ascending=True)
     for index, row in data_sort.iterrows():
-        top_transactions.append({"date": row["Дата платежа"],
-                                 "amount": abs(row["Сумма операции"]),
-                                 "category": row["Категория"],
-                                 "description": row["Описание"]})
+        top_transactions.append(
+            {
+                "date": row["Дата платежа"],
+                "amount": abs(row["Сумма операции"]),
+                "category": row["Категория"],
+                "description": row["Описание"],
+            }
+        )
     logger_ut.info("Функция get_top_five отработала")
     return top_transactions[:5]
 
-def get_read_file(file_path: str)-> dict:
+
+def get_read_file(file_path: str) -> dict:
     """Функция для чтения данных из файла json"""
     logger_ut.info("Функция get_read_file запущена")
     try:
@@ -142,7 +142,8 @@ def get_read_file(file_path: str)-> dict:
         logger_ut.error("Функция get_read_file отработала, но файл не является валидным json")
         return {}
 
-def get_currency_rates(data: dict)-> list[dict]:
+
+def get_currency_rates(data: dict) -> list[dict]:
     """Функция для получения курса валют"""
     logger_ut.info("Функция get_currency_rates запущена")
     try:
@@ -212,21 +213,21 @@ def get_stocks_info(data: list) -> list[dict]:
 def normalize(user_input: str) -> str:
     """Функция переводит введенный номер телефона в формат для поиска (+7 XXX XX-XX-XX)"""
     logger_ut.info("Функция normalize запущена")
-    digits = re.sub(r'\D', '', user_input)
+    digits = re.sub(r"\D", "", user_input)
 
-    if digits.startswith('8') and len(digits) == 11:
+    if digits.startswith("8") and len(digits) == 11:
         return f"+7 {digits[1:4]} {digits[4:7]}-{digits[7:9]}-{digits[9:11]}"
 
-    elif digits.startswith('7') and len(digits) == 11:
+    elif digits.startswith("7") and len(digits) == 11:
         return f"+7 {digits[1:4]} {digits[4:7]}-{digits[7:9]}-{digits[9:10]}"
 
-    elif len(digits) == 10 and digits.startswith('9'):
+    elif len(digits) == 10 and digits.startswith("9"):
         return f"+7 {digits[0:3]} {digits[3:5]}-{digits[5:7]}-{digits[7:9]}"
 
     elif len(digits) == 10:
         return f"+7 {digits[0:3]} {digits[3:5]}-{digits[5:7]}-{digits[7:9]}"
 
-    elif len(digits) < 10 and digits.startswith('9'):
+    elif len(digits) < 10 and digits.startswith("9"):
         return f"+7 {digits[0:3]} {digits[3:5]}-{digits[5:7]}-{digits[7:9]}"
 
     else:
@@ -237,7 +238,7 @@ def normalize(user_input: str) -> str:
 def unique_categories(df):
     """Возвращает DataFrame с уникальными категориями"""
     logger_ut.info("Функция unique_categories запущена")
-    unique_rows = df[['Категория']].drop_duplicates().reset_index(drop=True)
-    unique_rows['Категория'] = unique_rows['Категория'].fillna('Без категории')
+    unique_rows = df[["Категория"]].drop_duplicates().reset_index(drop=True)
+    unique_rows["Категория"] = unique_rows["Категория"].fillna("Без категории")
     logger_ut.info("Функция unique_categories отработала")
     return unique_rows

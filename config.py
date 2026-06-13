@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 # Базовые пути
 BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"

@@ -1,11 +1,16 @@
 import pandas as pd
-from src.reports import spending_by_category
-from src.services import search_by_phrases, search_by_phone_number, filters_transactions_by_persons
-from src.utils import get_user_time, unique_categories
-from src.views import main_info
-from config import EXCEL_FILE_PATH
 
-def main()->None:
+from config import EXCEL_FILE_PATH
+from src.reports import spending_by_category
+from src.services import filters_transactions_by_persons
+from src.services import search_by_phone_number
+from src.services import search_by_phrases
+from src.utils import get_user_time
+from src.utils import unique_categories
+from src.views import main_info
+
+
+def main() -> None:
     """Главная функция программы для работы с банковскими транзакциями"""
     print("\nПривет! Добро пожаловать в программу работы с банковскими транзакциями")
 
@@ -22,6 +27,7 @@ def main()->None:
 
             try:
                 from datetime import datetime
+
                 datetime.strptime(input_date, "%Y-%m-%d %H:%M:%S")
                 transactions = main_info(input_date)
                 print(transactions)
@@ -74,7 +80,5 @@ def main()->None:
             print()
 
 
-
 if __name__ == "__main__":
     main()
-
