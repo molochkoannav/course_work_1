@@ -236,6 +236,8 @@ def normalize(user_input: str) -> str:
 
 def unique_categories(df):
     """Возвращает DataFrame с уникальными категориями"""
+    logger_ut.info("Функция unique_categories запущена")
     unique_rows = df[['Категория']].drop_duplicates().reset_index(drop=True)
     unique_rows['Категория'] = unique_rows['Категория'].fillna('Без категории')
+    logger_ut.info("Функция unique_categories отработала")
     return unique_rows
